@@ -275,8 +275,8 @@ function App() {
 
   // Configuration State
   const [config, setConfig] = useState({
-    port: 11434,
-    model: "distil-qwen3-4b-text2sql-gguf-4bit",
+    port: 1234,
+    model: "t2sql-4b",
     api_key: "EMPTY",
     show_sql: true
   });
