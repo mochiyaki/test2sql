@@ -7,19 +7,16 @@ import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import Papa from 'papaparse';
 import initSqlJs from 'sql.js';
-
-// --- Utility Functions ---
-function cn(...inputs) {
-  return twMerge(clsx(inputs));
-}
+import { DataRow, FileUploadProps, MessageProps as MessagePropsType, SettingsModalProps, Config, Message, SqlJsModule } from './types';
+import { cn } from './utils';
 
 // --- Components ---
 
-function FileUpload({ onDataLoaded }) {
+function FileUpload({ onDataLoaded }: FileUploadProps) {
   const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const onDrop = useCallback((acceptedFiles) => {
+  const onDrop = useCallback((acceptedFiles: File[]) => {
     setUploading(true);
     setError(null);
     let loadedCount = 0;
@@ -29,7 +26,7 @@ function FileUpload({ onDataLoaded }) {
         header: true,
         skipEmptyLines: true,
         dynamicTyping: true,
-        complete: (results) => {
+        complete: (results: { data: DataRow[] }) => {
           try {
             const tableName = file.name.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9]/g, "_").toLowerCase();
             onDataLoaded(tableName, results.data);
@@ -43,7 +40,7 @@ function FileUpload({ onDataLoaded }) {
             setUploading(false);
           }
         },
-        error: (err) => {
+        error: (err: Papa.ParseError) => {
           console.error(err);
           setError(`Error reading ${file.name}: ${err.message}`);
           setUploading(false);
@@ -86,7 +83,7 @@ function FileUpload({ onDataLoaded }) {
   );
 }
 
-function Message({ message }) {
+function ChatMessage({ message }: MessagePropsType) {
   const isUser = message.role === 'user';
 
   return (
@@ -170,7 +167,7 @@ function Message({ message }) {
   );
 }
 
-function SettingsModal({ isOpen, onClose, config, setConfig }) {
+function SettingsModal({ isOpen, onClose, config, setConfig }: SettingsModalProps) {
   if (!isOpen) return null;
 
   return (
@@ -260,36 +257,35 @@ function SettingsModal({ isOpen, onClose, config, setConfig }) {
 
 
 function App() {
-  const [messages, setMessages] = useState([
+  const [messages, setMessages] = useState<Message[]>([
     { role: 'assistant', content: 'Hello! I can help you query your CSV data using SQL. Please upload a dataset to get started.' }
   ]);
   const [input, setInput] = useState('');
-  const [tables, setTables] = useState([]);
+  const [tables, setTables] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
   // Database State
-  const dbRef = useRef(null);
+  const dbRef = useRef<SqlJsModule | null>(null);
   const [dbReady, setDbReady] = useState(false);
-  const [schemas, setSchemas] = useState({});
+  const [schemas, setSchemas] = useState<{ [tableName: string]: string }>({});
 
   // Configuration State
-  const [config, setConfig] = useState({
+  const [config, setConfig] = useState<Config>({
     port: 1234,
     model: "t2sql-4b",
     api_key: "EMPTY",
     show_sql: true
   });
 
-  const chatEndRef = useRef(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Initialize SQL.js
   useEffect(() => {
     const initDB = async () => {
       try {
         const SQL = await initSqlJs({
-            // Locate the wasm file in the public folder
-            locateFile: file => `/sql-wasm.wasm`
+          locateFile: (file: string) => `/sql-wasm.wasm`
         });
         dbRef.current = new SQL.Database();
         setDbReady(true);
@@ -309,7 +305,7 @@ function App() {
     scrollToBottom();
   }, [messages]);
 
-  const handleDataLoaded = useCallback((tableName, data) => {
+  const handleDataLoaded = useCallback((tableName: string, data: DataRow[]) => {
     if (!dbRef.current || data.length === 0) return;
 
     try {
@@ -335,7 +331,7 @@ function App() {
       
       dbRef.current.exec("BEGIN TRANSACTION");
       data.forEach(row => {
-        const values = columns.map(col => row[col]);
+        const values = columns.map(col => row[col]) as import('sql.js').SqlValue[];
         stmt.run(values);
       });
       dbRef.current.exec("COMMIT");
@@ -369,7 +365,7 @@ function App() {
         return;
     }
 
-    const userMessage = { role: 'user', content: input };
+    const userMessage = { role: 'user' as const, content: input };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setLoading(true);
@@ -413,34 +409,35 @@ Question: ${userMessage.content}
       const chatResponse = await axios.post(`http://localhost:${config.port}/v1/chat/completions`, {
         model: config.model,
         messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt }
+            { role: "system" as const, content: systemPrompt },
+            { role: "user" as const, content: userPrompt }
         ],
         temperature: 0,
         max_tokens: 1024
       });
 
-      let sql = chatResponse.data.choices[0].message.content.trim();
+      let sql = (chatResponse.data as any).choices[0].message.content.trim();
 
       // Clean SQL
       sql = sql.replace(/```sql/g, '').replace(/```/g, '').trim();
 
       // 3. Execute SQL
-      let results = [];
-      let error = null;
+      let results: DataRow[] = [];
+      let error: string | null = null;
 
       try {
-        const stmt = dbRef.current.prepare(sql);
-        while (stmt.step()) {
-            results.push(stmt.getAsObject());
+        const stmt = dbRef.current?.prepare(sql);
+        while (stmt?.step()) {
+            const row = stmt.getAsObject() as DataRow;
+            results.push(row);
         }
-        stmt.free();
+        stmt?.free();
       } catch (e) {
-        error = e.message;
+        error = (e as Error).message;
         console.error("SQL Execution Error:", e);
       }
 
-      const aiMessage = {
+      const aiMessage: Message = {
         role: 'assistant',
         content: error ? "I encountered an error executing the query." : (results.length === 0 ? "Query executed successfully, but returned no results." : null),
         sql: config.show_sql ? sql : null,
@@ -455,14 +452,14 @@ Question: ${userMessage.content}
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: "Sorry, I couldn't connect to the model server. Is it running on the correct port?",
-        error: err.message
+        error: (err as Error).message
       }]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -559,7 +556,7 @@ Question: ${userMessage.content}
         <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
           <div className="max-w-4xl mx-auto">
             {messages.map((msg, idx) => (
-              <Message key={idx} message={msg} />
+              <ChatMessage key={idx} message={msg} />
             ))}
             {loading && (
               <motion.div

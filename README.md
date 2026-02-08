@@ -6,13 +6,17 @@ A natural language to SQL query application that allows users to upload CSV file
 
 ```
 text2sql/
+├── demo1.png             # Demo screenshot
+├── demo2.png             # Demo screenshot
 ├── public/
 │   ├── sql-wasm.wasm     # SQL.js WebAssembly file
 │   └── vite.svg          # Vite logo
 ├── src/
-│   ├── App.jsx           # Main application component
-│   ├── main.jsx          # Entry point
+│   ├── App.tsx           # Main application component
+│   ├── main.tsx          # Entry point
 │   ├── index.css         # Styles
+│   ├── types.ts          # TypeScript type definitions
+│   ├── utils.ts          # Utility functions
 │   └── assets/
 │       └── react.svg     # React logo
 ├── .gitignore            # Git ignore file
@@ -22,7 +26,7 @@ text2sql/
 ├── postcss.config.js     # PostCSS configuration
 ├── tailwind.config.js    # Tailwind CSS configuration
 └── vite.config.js        # Vite configuration
-```
+``
 
 ## Workflow
 
@@ -81,7 +85,7 @@ text2sql/
 
 ## Configuration
 
-The application requires a running LLM server to generate SQL queries. By default, it expects the server to be running on `localhost:11434` (ollama) or `localhost:1234` (lmstudio or `ggc e4`).
+The application requires a running LLM server to generate SQL queries. The default configuration is set to `localhost:1234` (`ggc e4` or LM Studio), but can be changed in the Settings modal.
 
 ### Settings
 
@@ -100,16 +104,35 @@ The application requires a running LLM server to generate SQL queries. By defaul
 
 ## Dependencies
 
-- react: ^19.2.0
-- react-dom: ^19.2.0
+### Runtime Dependencies
+- react: ^19.2.4
+- react-dom: ^19.2.4
 - sql.js: ^1.13.0
-- axios: ^1.13.4
+- axios: ^1.13.5
 - papaparse: ^5.5.3
 - framer-motion: ^12.33.0
 - lucide-react: ^0.563.0
 - tailwind-merge: ^3.4.0
 - clsx: ^2.1.1
 - react-dropzone: ^14.4.0
+
+### TypeScript Type Definitions
+- @types/axios: ^0.9.36
+- @types/papaparse: ^5.5.2
+- @types/react: ^19.2.13
+- @types/react-dom: ^19.2.3
+- @types/sql.js: ^1.4.9
+
+### Development Dependencies
+- @vitejs/plugin-react: ^5.1.1
+- autoprefixer: ^10.4.24
+- eslint: ^9.39.1
+- eslint-plugin-react-hooks: ^7.0.1
+- eslint-plugin-react-refresh: ^0.4.24
+- globals: ^16.5.0
+- postcss: ^8.5.6
+- tailwindcss: ^3.4.17
+- vite: ^7.2.4
 
 ## Development
 
