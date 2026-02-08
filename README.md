@@ -26,7 +26,7 @@ text2sql/
 ├── postcss.config.js     # PostCSS configuration
 ├── tailwind.config.js    # Tailwind CSS configuration
 └── vite.config.js        # Vite configuration
-``
+```
 
 ## Workflow
 
