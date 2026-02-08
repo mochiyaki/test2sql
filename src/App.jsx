@@ -537,7 +537,7 @@ Question: ${userMessage.content}
 
         {/* Footer */}
         <div className="p-4 border-t border-dark-border text-xs text-gray-600 text-center">
-          Powered by Distil Labs
+          Powered by distillabs x gguf.org
         </div>
       </div>
 
