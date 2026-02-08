@@ -5,7 +5,7 @@ A natural language to SQL query application that allows users to upload CSV file
 ## Project Structure
 
 ```
-test2sql/
+text2sql/
 ├── public/
 │   ├── sql-wasm.wasm     # SQL.js WebAssembly file
 │   └── vite.svg          # Vite logo
