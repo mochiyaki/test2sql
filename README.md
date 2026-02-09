@@ -85,7 +85,7 @@ text2sql/
 
 ## Configuration
 
-The application requires a running LLM server to generate SQL queries. The default configuration is set to `localhost:1234` (`ggc e4` or LM Studio), but can be changed in the Settings modal.
+The application requires a running LLM server to generate SQL queries. The default configuration is set to `localhost:1234` (`ggc e4` or LM Studio), but can be changed in the Settings modal. i.e., `localhost:11434` (ollama).
 
 ### Settings
 
